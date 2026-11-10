@@ -113,10 +113,10 @@ export function ExplorerView({ locale, species, system, dbData, focusMeshId }: E
         </div>
       </div>
 
-      {/* 3. Primary 3D Workstation Dual-Pane Layout */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[600px] lg:min-h-[680px]">
+      {/* 3. Primary 3D Workstation Dual-Pane Layout (Fixed & Sticky 3D Viewport) */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {/* Left/Right Sidebar: System Tree Navigator OR 3D Practical Exam Mode */}
-        <div className="lg:col-span-4 flex flex-col h-[520px] lg:h-full">
+        <div className="lg:col-span-4 flex flex-col h-[520px] lg:h-[calc(100vh-190px)] overflow-hidden">
           {isExamMode ? (
             <PracticalExamMode
               species={species}
@@ -128,8 +128,8 @@ export function ExplorerView({ locale, species, system, dbData, focusMeshId }: E
           )}
         </div>
 
-        {/* Central Dynamic 3D Viewer (VetCanvas) */}
-        <div className="lg:col-span-8 flex flex-col h-[520px] lg:h-full relative">
+        {/* Central Dynamic 3D Viewer (VetCanvas) - Stationary Sticky Viewport */}
+        <div className="lg:col-span-8 flex flex-col h-[520px] lg:h-[calc(100vh-190px)] lg:sticky lg:top-4 relative">
           <VetCanvas 
             speciesId={species} 
             systemId={system} 

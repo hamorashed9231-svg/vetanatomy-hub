@@ -132,6 +132,7 @@ export function VetCanvas({
   const cyclePinDisplayMode = useAnatomyStore((state) => state.cyclePinDisplayMode);
   const clippingConfig = useAnatomyStore((state) => state.clippingConfig);
   const [showClippingControls, setShowClippingControls] = useState(false);
+  const [isCameraLocked, setIsCameraLocked] = useState(false);
   const toggleOfflinePackManager = useAnatomyStore((state) => state.toggleOfflinePackManager);
 
   // Active species & system (prop override or store)
@@ -225,6 +226,28 @@ export function VetCanvas({
           >
             <Sliders size={14} className={showPeelingControls || isMultiLayerPeeling ? 'text-cyan-400' : ''} />
             <span className="hidden sm:inline">{isRtl ? 'التقشير والتفكيك' : 'Layer Peeling'}</span>
+          </button>
+
+          {/* Lock / Freeze Camera Viewport Toggle */}
+          <button
+            onClick={() => setIsCameraLocked(!isCameraLocked)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold backdrop-blur-md border transition-all shadow-xl ${
+              isCameraLocked
+                ? 'bg-gradient-to-r from-amber-500/25 to-yellow-500/25 text-amber-300 border-amber-400/60 shadow-amber-500/10'
+                : 'bg-slate-900/90 hover:bg-slate-800 text-slate-300 border-slate-700/80 hover:text-white'
+            }`}
+            title={
+              isRtl
+                ? isCameraLocked ? 'الواجهة ثابتة والكاميرا مقفلة (انقر لإلغاء القفل)' : 'تثبيت زاوية الكاميرا ومنع الحركة'
+                : isCameraLocked ? 'Camera Viewport Locked (Click to unlock)' : 'Lock Camera Viewport'
+            }
+          >
+            <Lock size={14} className={isCameraLocked ? 'text-amber-400' : ''} />
+            <span className="hidden sm:inline">
+              {isCameraLocked 
+                ? (isRtl ? 'المنظور: ثابت' : 'Camera: Locked') 
+                : (isRtl ? 'تثبيت المنظور' : 'Lock View')}
+            </span>
           </button>
 
           {/* Offline Lab Pack Manager Button */}
@@ -342,6 +365,7 @@ export function VetCanvas({
                   viewportId={viewportId}
                   activeOrganId={activeOrganId}
                   onSelectOrgan={onSelectOrgan}
+                  isCameraLocked={isCameraLocked}
                 />
               ))}
             </group>
@@ -355,6 +379,7 @@ export function VetCanvas({
               viewportId={viewportId}
               activeOrganId={activeOrganId}
               onSelectOrgan={onSelectOrgan}
+              isCameraLocked={isCameraLocked}
             />
           )}
 
@@ -374,7 +399,7 @@ export function VetCanvas({
           />
 
           {/* Smooth Camera Fly-To (Lerp) Transition Controller */}
-          <CameraFocusController controlsRef={controlsRef} />
+          <CameraFocusController controlsRef={controlsRef} isLocked={isCameraLocked} />
 
           {/* Synchronized Camera Controller for Comparative Split-Screen */}
           <SynchronizedCameraController controlsRef={controlsRef} viewportId={viewportId} />
@@ -628,6 +653,7 @@ function DracoAnatomicalModel({
   viewportId = 'main',
   activeOrganId,
   onSelectOrgan,
+  isCameraLocked = false,
 }: {
   modelUrl: string;
   speciesId: SpeciesId;
@@ -636,6 +662,7 @@ function DracoAnatomicalModel({
   viewportId?: 'main' | 'left' | 'right';
   activeOrganId?: string | null;
   onSelectOrgan?: (organId: string) => void;
+  isCameraLocked?: boolean;
 }) {
   // Offline-First: resolve model from IndexedDB blob cache if available
   const [activeUrl, setActiveUrl] = useState<string>(() => getMemoryCachedGlbUrl(modelUrl) || modelUrl);
@@ -889,7 +916,9 @@ function DracoAnatomicalModel({
             setSecondaryOrganId(organId);
           } else {
             setSelectedOrganId(organId);
-            isolateOrgan(organId);
+            if (!isCameraLocked) {
+              isolateOrgan(organId);
+            }
           }
         }
       }}
@@ -914,7 +943,7 @@ function DracoAnatomicalModel({
 // Camera Focus Controller with Smooth Lerp Interpolation
 // -------------------------------------------------------------
 
-function CameraFocusController({ controlsRef }: { controlsRef: React.RefObject<any> }) {
+function CameraFocusController({ controlsRef, isLocked }: { controlsRef: React.RefObject<any>; isLocked?: boolean }) {
   const { camera } = useThree();
   const selectedOrganId = useAnatomyStore((state) => state.selectedOrganId);
   const isIsolatedMode = useAnatomyStore((state) => state.isIsolatedMode);
@@ -929,6 +958,10 @@ function CameraFocusController({ controlsRef }: { controlsRef: React.RefObject<a
 
   // Compute destination coordinates when selected organ or isolation mode changes
   useEffect(() => {
+    if (isLocked) {
+      isTransitioning.current = false;
+      return;
+    }
     if (selectedOrganId && isIsolatedMode) {
       const organ = getOrganById(selectedOrganId);
       if (organ && organ.cameraFocus) {
@@ -943,7 +976,7 @@ function CameraFocusController({ controlsRef }: { controlsRef: React.RefObject<a
       targetLookAt.current.copy(defaultTarget.current);
       isTransitioning.current = true;
     }
-  }, [selectedOrganId, isIsolatedMode]);
+  }, [selectedOrganId, isIsolatedMode, isLocked]);
 
   // Reset trigger handler
   useEffect(() => {

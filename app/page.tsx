@@ -69,15 +69,15 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Primary Workstation Dual-Pane: 3D Viewport + Organ Details */}
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[550px] lg:min-h-[640px]">
-            {/* 3D Viewport Column */}
-            <div className="lg:col-span-8 flex flex-col h-[500px] lg:h-full">
+          {/* Primary Workstation Dual-Pane: 3D Viewport + Organ Details (Fixed 3D Workstation) */}
+          <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            {/* 3D Viewport Column - Stationary Sticky Viewport */}
+            <div className="lg:col-span-8 flex flex-col h-[500px] lg:h-[calc(100vh-220px)] lg:sticky lg:top-4">
               <VetCanvas />
             </div>
 
             {/* Organ Details Side Panel */}
-            <div className="lg:col-span-4 flex flex-col h-[500px] lg:h-full">
+            <div className="lg:col-span-4 flex flex-col h-[500px] lg:h-[calc(100vh-220px)] overflow-hidden">
               <OrganDetailCard />
             </div>
           </div>
