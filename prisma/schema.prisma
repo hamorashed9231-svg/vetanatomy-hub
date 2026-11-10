@@ -1,0 +1,121 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Species {
+  id             String          @id @default(uuid())
+  slug           String          @unique
+  nameEn         String
+  nameAr         String
+  scientificName String
+  descriptionEn  String          @db.Text
+  descriptionAr  String          @db.Text
+  thumbnail      String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  systems        SpeciesSystem[]
+
+  @@index([slug])
+}
+
+model AnatomicalSystem {
+  id            String          @id @default(uuid())
+  slug          String          @unique
+  nameEn        String
+  nameAr        String
+  descriptionEn String          @db.Text
+  descriptionAr String          @db.Text
+  icon          String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  species       SpeciesSystem[]
+
+  @@index([slug])
+}
+
+model SpeciesSystem {
+  id                    String            @id @default(uuid())
+  speciesId             String
+  systemId              String
+  modelUrl              String            // Path to GLTF/GLB file
+  defaultCameraSettings Json              // { position: [x, y, z], target: [x, y, z] }
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  species               Species           @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+  system                AnatomicalSystem  @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  organs                Organ[]
+
+  @@unique([speciesId, systemId])
+  @@index([speciesId])
+  @@index([systemId])
+}
+
+model Organ {
+  id                 String          @id @default(uuid())
+  meshId             String          // Exact 3D node identifier for Raycasting
+  speciesSystemId    String
+  nameEn             String
+  nameAr             String
+  latinName          String
+  descriptionEn      String          @db.Text
+  descriptionAr      String          @db.Text
+  bloodSupplyEn      String          @db.Text
+  bloodSupplyAr      String          @db.Text
+  innervationEn      String          @db.Text
+  innervationAr      String          @db.Text
+  clinicalPearlsEn   String          @db.Text
+  clinicalPearlsAr   String          @db.Text
+  focusCoordinates   Json            // { position: [x, y, z], target: [x, y, z] }
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  speciesSystem      SpeciesSystem       @relation(fields: [speciesSystemId], references: [id], onDelete: Cascade)
+  quizQuestions      QuizQuestion[]
+  flashcardProgress  FlashcardProgress?
+
+  @@unique([speciesSystemId, meshId])
+  @@index([meshId])
+  @@index([speciesSystemId])
+}
+
+model QuizQuestion {
+  id            String   @id @default(uuid())
+  organId       String?
+  questionEn    String   @db.Text
+  questionAr    String   @db.Text
+  options       Json     // Bilingual options: [{ en: string, ar: string }]
+  correctAnswer String   // Text of the correct answer or option key
+  explanationEn String   @db.Text
+  explanationAr String   @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  organ         Organ?   @relation(fields: [organId], references: [id], onDelete: SetNull)
+
+  @@index([organId])
+}
+
+model FlashcardProgress {
+  id             String    @id @default(uuid())
+  organId        String    @unique
+  easeFactor     Float     @default(2.5)
+  interval       Int       @default(0) // review interval in days
+  repetitions    Int       @default(0) // number of sequential successful repetitions
+  nextReviewDate DateTime  @default(now())
+  lastDifficulty String?   // 'again' | 'hard' | 'good' | 'easy'
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organ          Organ     @relation(fields: [organId], references: [id], onDelete: Cascade)
+
+  @@index([organId])
+  @@index([nextReviewDate])
+}

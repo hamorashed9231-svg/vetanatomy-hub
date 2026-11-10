@@ -1,0 +1,130 @@
+// scripts/build-anatomy-registry.js
+const fs = require('fs');
+const path = require('path');
+
+const SPECIES = [
+  {
+    slug: 'equine',
+    nameEn: 'Equine (Horse)',
+    nameAr: 'الخيليات (الحصان)',
+    scientificName: 'Equus caballus',
+    descriptionEn: 'Odd-toed ungulate and specialized hindgut fermenter with expansive cecum, stay apparatus, and obligate nasal breathing.',
+    descriptionAr: 'حيوان حافري مفرد الأصابع وخمار للأمعاء الغليظة يتميز بأعور ضخم وجهاز ثبات ميكانيكي وتعتبر الخيول متنفساً أنفياً إجبارياً.',
+    thumbnail: '/images/species/equine.webp',
+  },
+  {
+    slug: 'bovine',
+    nameEn: 'Bovine (Cattle / Cow)',
+    nameAr: 'البقريات (الأبقار)',
+    scientificName: 'Bos taurus',
+    descriptionEn: 'Large artiodactyl ruminant with a compound 4-chambered stomach (Rumen, Reticulum, Omasum, Abomasum) for microbial fermentation.',
+    descriptionAr: 'حيوان مجتر مزدوج الأصابع ذو معدة مركبة رباعية الحجرات (الكرش، القلنسوة، أم التلافيف، والأنفحة) للتخمر الميكروبي.',
+    thumbnail: '/images/species/bovine.webp',
+  },
+  {
+    slug: 'canine',
+    nameEn: 'Canine (Dog)',
+    nameAr: 'الكلبيات (الكلب)',
+    scientificName: 'Canis lupus familiaris',
+    descriptionEn: 'Primary model organism in companion animal practice with simple monogastric stomach, carnassial teeth, and cursorial locomotion.',
+    descriptionAr: 'الكائن النموذجي الأساسي في طب الحيوانات الأليفة ذو معدة بسيطة وأضراس قاطعة وهيكل مصمم للعدو السريع.',
+    thumbnail: '/images/species/canine.webp',
+  },
+  {
+    slug: 'feline',
+    nameEn: 'Feline (Cat)',
+    nameAr: 'السنوريات (القط)',
+    scientificName: 'Felis catus',
+    descriptionEn: 'Obligate hypercarnivore with high dietary protein demands, flexible spine, floating clavicle, and pre-scrotal urethral narrowing in males.',
+    descriptionAr: 'حيوان لاحم إجباري يتميز بمتطلبات بروتينية خاصة وعمود فقري شديد المرونة وترقوة عائمة ومجرى بولي ضيق في الذكور.',
+    thumbnail: '/images/species/feline.webp',
+  },
+  {
+    slug: 'ovine_caprine',
+    nameEn: 'Ovine / Caprine (Sheep & Goat)',
+    nameAr: 'المجترات الصغيرة (الضأن والماعز)',
+    scientificName: 'Ovis aries / Capra hircus',
+    descriptionEn: 'Small ruminants with split philtrum, spiral colon, vermiform urethral process, and extreme hepatic copper toxicity sensitivity.',
+    descriptionAr: 'مجترات صغيرة تتميز بشفة علوية مشقوقة وقولون لولبي وزائدة إحليلية دودية وحساسية كبدية شديدة للنحاس.',
+    thumbnail: '/images/species/ovine.webp',
+  },
+  {
+    slug: 'avian',
+    nameEn: 'Avian (Bird / Poultry)',
+    nameAr: 'الطيور (الدواجن والطيور)',
+    scientificName: 'Gallus gallus domesticus',
+    descriptionEn: 'Avian dinosaurian lineage with pneumatic bones, unidirectional lung airflow through 9 air sacs, and grinding muscular gizzard.',
+    descriptionAr: 'سلالة طيرية مهيأة للطيران تتميز بعظام هوائية وتدفق رئوي أحادي الاتجاه عبر 9 أكياس هوائية وقانصة عضلية طاحنة.',
+    thumbnail: '/images/species/avian.webp',
+  },
+  {
+    slug: 'camelid',
+    nameEn: 'Camelids (Dromedary Camel)',
+    nameAr: 'الإبليات (الجمل وحيد السنام)',
+    scientificName: 'Camelus dromedarius',
+    descriptionEn: 'Desert pseudo-ruminant with three-chambered stomach (C1, C2, C3), glandular water saccules, oval erythrocytes, and adipose dorsal hump.',
+    descriptionAr: 'حيوان صحراوي من شبيهات المجترات ذو معدة ثلاثية الحجرات (C1, C2, C3) وأكياس مائية غدية وكريات دم بيضاوية وسنام شحمي.',
+    thumbnail: '/images/species/camelid.webp',
+  },
+];
+
+const SYSTEMS = [
+  {
+    slug: 'cardiovascular',
+    nameEn: 'Cardiovascular System',
+    nameAr: 'جهاز القلب والأوعية الدموية',
+    descriptionEn: 'Central muscular pump, arterial perfusion tree, capillary beds, and venous return network.',
+    descriptionAr: 'المضخة العضلية المركزية والشجرة الشريانية والشعيرات الدموية وشبكة العائد الوريدي.',
+    icon: 'Heart',
+  },
+  {
+    slug: 'digestive',
+    nameEn: 'Digestive System',
+    nameAr: 'الجهاز الهضمي والمعدة',
+    descriptionEn: 'Alimentary canal from oral cavity through forestomach fermentation vats to hindgut chambers.',
+    descriptionAr: 'القناة الهضمية من التجويف الفموي عبر غرف التخمر الميكروبي للمعدة حتى الأمعاء الغليظة.',
+    icon: 'Coffee',
+  },
+  {
+    slug: 'respiratory',
+    nameEn: 'Respiratory System',
+    nameAr: 'الجهاز التنفسي والشعب الهوائية',
+    descriptionEn: 'Airways, tracheobronchial tree, gas-exchanging pulmonary parenchyma, and avian air sacs.',
+    descriptionAr: 'المجاري التنفسية والشجرة القصبية ونسيج الرئة لتبادل الغازات والأكياس الهوائية للطيور.',
+    icon: 'Wind',
+  },
+  {
+    slug: 'nervous',
+    nameEn: 'Nervous System',
+    nameAr: 'الجهاز العصبي المركزي والمحيطي',
+    descriptionEn: 'Encephalon, spinal cord, twelve cranial nerves, and peripheral autonomic network.',
+    descriptionAr: 'المخ والمخيخ والنخاع الشوكي والأعصاب القحفية الـ 12 والشبكة العصبية اللاإرادية.',
+    icon: 'Brain',
+  },
+  {
+    slug: 'urogenital',
+    nameEn: 'Urogenital System',
+    nameAr: 'الجهاز البولي والتناسلي',
+    descriptionEn: 'Renal filtration parenchyma, urinary drainage ducts, and species reproductive tracts.',
+    descriptionAr: 'نسيج الترشيح الكلوي ومجاري تصريف البول والأجهزة التناسلية المتخصصة لكل نوع.',
+    icon: 'Layers',
+  },
+  {
+    slug: 'skeletal',
+    nameEn: 'Skeletal System',
+    nameAr: 'الهيكل العظمي',
+    descriptionEn: 'Axial and appendicular framework providing biomechanical locomotion and organ protection.',
+    descriptionAr: 'الهيكل المحوري والطرفي الذي يوفر الدعم الميكانيكي الحركي وحماية الأحشاء الداخلية.',
+    icon: 'Bone',
+  },
+  {
+    slug: 'muscular',
+    nameEn: 'Muscular System',
+    nameAr: 'الجهاز العضلي الحركي',
+    descriptionEn: 'Striated locomotor muscles, postural stabilization groups, and stay apparatus biomechanics.',
+    descriptionAr: 'العضلات الحركية المخططة وتثبيت القوام والآليات الميكانيكية لجهاز الثبات.',
+    icon: 'Activity',
+  },
+];
+
+console.log('Generating full anatomical data blueprint...');
