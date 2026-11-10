@@ -311,7 +311,7 @@ export const useAnatomyStore = create<AnatomyState>((set) => ({
   setSearchQuery: (searchQuery) => set({ searchQuery }),
 
   // Interactive 3D Floating Callout Pins
-  pinDisplayMode: 'all',
+  pinDisplayMode: 'hover',
   setPinDisplayMode: (pinDisplayMode) => set({ pinDisplayMode }),
   cyclePinDisplayMode: () => set((state) => {
     const modes: PinDisplayMode[] = ['all', 'hover', 'quiz_numbers', 'hidden'];

@@ -20,6 +20,7 @@ export function OrganInspectorDrawer() {
   const selectedOrganId = useAnatomyStore((state) => state.selectedOrganId);
   const isIsolatedMode = useAnatomyStore((state) => state.isIsolatedMode);
   const exitIsolation = useAnatomyStore((state) => state.exitIsolation);
+  const setSelectedOrganId = useAnatomyStore((state) => state.setSelectedOrganId);
 
   if (!selectedOrganId) return null;
 
@@ -56,15 +57,31 @@ export function OrganInspectorDrawer() {
             </div>
           </div>
 
-          {/* Action: Exit Isolation Button */}
-          <button
-            onClick={exitIsolation}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 transition-all"
-            title={t.exitIsolation}
-          >
-            <RotateCcw size={14} />
-            <span>{t.exitIsolation}</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            {/* Action: Exit Isolation Button */}
+            {isIsolatedMode && (
+              <button
+                onClick={exitIsolation}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 transition-all"
+                title={t.exitIsolation}
+              >
+                <RotateCcw size={14} />
+                <span>{t.exitIsolation}</span>
+              </button>
+            )}
+
+            {/* Action: Close Drawer */}
+            <button
+              onClick={() => {
+                exitIsolation();
+                setSelectedOrganId(null);
+              }}
+              className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              title={locale === 'ar' ? 'إغلاق التفاصيل' : 'Close Inspector'}
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable Inspection Body */}

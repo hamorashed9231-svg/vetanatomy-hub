@@ -134,6 +134,8 @@ export function VetCanvas({
   const [showClippingControls, setShowClippingControls] = useState(false);
   const [isCameraLocked, setIsCameraLocked] = useState(false);
   const toggleOfflinePackManager = useAnatomyStore((state) => state.toggleOfflinePackManager);
+  const hoveredOrganId = useAnatomyStore((state) => state.hoveredOrganId);
+  const hoveredOrgan = hoveredOrganId ? getOrganById(hoveredOrganId) : null;
 
   // Active species & system (prop override or store)
   const currentSpecies: SpeciesId = speciesId || storeSpecies;
@@ -431,6 +433,40 @@ export function VetCanvas({
         </Suspense>
       </Canvas>
 
+      {/* Dynamic Hover Tooltip on Cursor Hover */}
+      {hoveredOrgan && (
+        <div
+          dir={isRtl ? 'rtl' : 'ltr'}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-none max-w-lg w-[92%] sm:w-auto animate-in fade-in slide-in-from-bottom-2 duration-150"
+        >
+          <div className="rounded-2xl border border-cyan-400/60 bg-slate-950/95 px-4 py-3 text-slate-100 shadow-2xl shadow-cyan-500/25 backdrop-blur-xl">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="h-2.5 w-2.5 rounded-full bg-cyan-400 animate-ping" />
+              <span className="text-sm font-bold text-white tracking-wide">
+                {hoveredOrgan.name[locale]}
+              </span>
+              <span className="text-xs text-slate-400 font-normal">
+                ({hoveredOrgan.name[locale === 'ar' ? 'en' : 'ar']})
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-cyan-300 mb-1.5 font-mono">
+              <span className="font-serif italic font-semibold text-cyan-300 bg-cyan-950/70 px-2 py-0.5 rounded border border-cyan-800/40">
+                {hoveredOrgan.latinTaxonomyName}
+              </span>
+              {hoveredOrgan.bloodSupply?.[locale] && (
+                <>
+                  <span className="text-slate-500">•</span>
+                  <span className="text-rose-400">🩸 {hoveredOrgan.bloodSupply[locale].split('.')[0]}</span>
+                </>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed line-clamp-2">
+              {hoveredOrgan.description[locale]}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Floating Status Indicator */}
       <div className="absolute bottom-3 right-3 pointer-events-none flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/85 backdrop-blur-md border border-slate-700/80 text-[11px] text-slate-300 font-mono shadow-lg">
         <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -459,7 +495,7 @@ function OrganLayerListOverlay({
   activeOrganId?: string | null;
   onSelectOrgan?: (organId: string) => void;
 }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const locale = useAnatomyStore((state) => state.locale);
   const isRtl = locale === 'ar';
 

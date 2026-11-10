@@ -28,16 +28,35 @@ export function OrganDetailCard() {
 
   // Check registry first, fallback to organsData
   const registryOrgan = selectedOrganId ? getOrganById(selectedOrganId) : undefined;
-  const legacyOrgan = ORGANS_DATA.find((o) => o.id === selectedOrganId) || ORGANS_DATA[0];
+  const legacyOrgan = selectedOrganId ? ORGANS_DATA.find((o) => o.id === selectedOrganId) : undefined;
 
-  const organName = registryOrgan ? registryOrgan.name[language] : legacyOrgan.name[language];
-  const latinName = registryOrgan ? registryOrgan.latinTaxonomyName : legacyOrgan.latinName;
-  const description = registryOrgan ? registryOrgan.description[language] : legacyOrgan.function[language];
-  const clinicalSignificance = registryOrgan ? registryOrgan.clinicalPearls[language] : legacyOrgan.clinicalSignificance[language];
+  if (!selectedOrganId || (!registryOrgan && !legacyOrgan)) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 text-center text-slate-400">
+        <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-3 shadow-lg shadow-cyan-500/10">
+          <Target size={24} />
+        </div>
+        <h3 className="text-sm font-semibold text-slate-200 mb-1">
+          {language === 'ar' ? 'فحص واستكشاف الأعضاء 3D' : 'Interactive 3D Organ Inspection'}
+        </h3>
+        <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+          {language === 'ar' 
+            ? 'ضع مؤشر الفأرة على أي جزء في النموذج لعرض اسمه وموقعه فوراً، أو انقر عليه لتثبيت الفحص وقراءة التروية والأعصاب والأهمية السريرية.'
+            : 'Hover your cursor over any organ in the 3D canvas to preview its name, or click to isolate and inspect its clinical pearls.'}
+        </p>
+      </div>
+    );
+  }
+
+  const activeOrgan = registryOrgan || legacyOrgan!;
+  const organName = registryOrgan ? registryOrgan.name[language] : legacyOrgan!.name[language];
+  const latinName = registryOrgan ? registryOrgan.latinTaxonomyName : legacyOrgan!.latinName;
+  const description = registryOrgan ? registryOrgan.description[language] : legacyOrgan!.function[language];
+  const clinicalSignificance = registryOrgan ? registryOrgan.clinicalPearls[language] : legacyOrgan!.clinicalSignificance[language];
   const bloodSupply = registryOrgan ? registryOrgan.bloodSupply[language] : undefined;
   const innervation = registryOrgan ? registryOrgan.innervation[language] : undefined;
-  const commonPathologies = registryOrgan ? registryOrgan.commonPathologies : legacyOrgan.commonPathologies;
-  const organId = registryOrgan ? registryOrgan.id : legacyOrgan.id;
+  const commonPathologies = registryOrgan ? registryOrgan.commonPathologies : legacyOrgan!.commonPathologies;
+  const organId = registryOrgan ? registryOrgan.id : legacyOrgan!.id;
 
   const t = {
     latinLabel: language === 'ar' ? 'التسمية اللاتينية (NAV)' : 'Nomina Anatomica Veterinaria',
@@ -73,25 +92,39 @@ export function OrganDetailCard() {
           </div>
         </div>
 
-        {/* Isolate / Focus Action Button */}
-        <button
-          onClick={() => {
-            if (isIsolatedMode) {
+        <div className="flex items-center gap-1.5">
+          {/* Isolate / Focus Action Button */}
+          <button
+            onClick={() => {
+              if (isIsolatedMode) {
+                clearIsolation();
+              } else {
+                isolateOrgan(organId);
+              }
+            }}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all shadow-md ${
+              isIsolatedMode
+                ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20'
+                : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-500/20'
+            }`}
+            title={isIsolatedMode ? t.isolatedActive : t.isolateBtn}
+          >
+            {isIsolatedMode ? <RotateCcw size={14} /> : <Target size={14} />}
+            <span>{isIsolatedMode ? (language === 'ar' ? 'إلغاء العزل' : 'Reset Focus') : t.isolateBtn}</span>
+          </button>
+
+          {/* Close Card Button */}
+          <button
+            onClick={() => {
               clearIsolation();
-            } else {
-              isolateOrgan(organId);
-            }
-          }}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all shadow-md ${
-            isIsolatedMode
-              ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/20'
-              : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-500/20'
-          }`}
-          title={isIsolatedMode ? t.isolatedActive : t.isolateBtn}
-        >
-          {isIsolatedMode ? <RotateCcw size={14} /> : <Target size={14} />}
-          <span>{isIsolatedMode ? (language === 'ar' ? 'إلغاء العزل' : 'Reset Focus') : t.isolateBtn}</span>
-        </button>
+              setSelectedOrganId(null);
+            }}
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+            title={language === 'ar' ? 'إغلاق البطاقة' : 'Close Details'}
+          >
+            <RotateCcw size={14} className="rotate-45" />
+          </button>
+        </div>
       </div>
 
       {/* Scrollable Details Body */}
